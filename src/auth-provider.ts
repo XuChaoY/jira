@@ -4,10 +4,13 @@ const localStorageKey = "__auth_provider_token__";
 const apiUrl = process.env.REACT_APP_API_URL;
 export const getToken = () => window.localStorage.getItem(localStorageKey);
 
+//处理请求返回参数
 export const handlerUserResponse = ({ user }: { user: User }) => {
   window.localStorage.setItem(localStorageKey, user.token || "");
   return user;
 };
+
+//定义登录函数
 export const login = (data: { username: string; password: string }) => {
   return fetch(`${apiUrl}/login`, {
     method: "POST",
@@ -24,6 +27,7 @@ export const login = (data: { username: string; password: string }) => {
   });
 };
 
+//定义注册函数
 export const register = (data: { username: string; password: string }) => {
   return fetch(`${apiUrl}/register`, {
     method: "POST",
@@ -40,5 +44,6 @@ export const register = (data: { username: string; password: string }) => {
   });
 };
 
+//定义登出函数
 export const logout = async () =>
   window.localStorage.removeItem(localStorageKey);

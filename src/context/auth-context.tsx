@@ -1,10 +1,22 @@
-import React, { useState, ReactNode } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import * as auth from "../auth-provider";
 import { User } from "../screens/project-list/search-panel";
+import { http } from "../utils/http";
 interface AuthForm {
   username: string;
   password: string;
 }
+//初始化用户信息，做持久化登陆
+const bootstrapUser = async () => {
+  let user = null;
+  const token = auth.getToken();
+  if (token) {
+    const data = await http("me", { token: token });
+    user = data.user;
+  }
+  return user;
+};
+//声明context
 const AuthContext = React.createContext<
   | {
       user: User | null;
@@ -16,6 +28,7 @@ const AuthContext = React.createContext<
 >(undefined);
 AuthContext.displayName = "AuthContext";
 
+//重新包装的login、register、logut的原因是形成全局的user以及方法全局化
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const login = (form: AuthForm) =>
@@ -23,6 +36,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = (form: AuthForm) =>
     auth.register(form).then((user) => setUser(user));
   const logout = () => auth.logout().then(() => setUser(null));
+  useEffect(() => {
+    bootstrapUser().then(setUser);
+  }, []);
   return (
     <AuthContext.Provider
       children={children}
