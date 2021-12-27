@@ -1,7 +1,9 @@
-import React, { useState, useEffect, ReactNode } from "react";
+import React, { useEffect, ReactNode } from "react";
 import * as auth from "../auth-provider";
 import { User } from "../screens/project-list/search-panel";
 import { http } from "../utils/http";
+import { useAsync } from "../utils/use-async";
+import { FullPageLoading, FullPageErrorFallBack } from "../components/lib";
 interface AuthForm {
   username: string;
   password: string;
@@ -30,15 +32,30 @@ AuthContext.displayName = "AuthContext";
 
 //重新包装的login、register、logut的原因是形成全局的user以及方法全局化
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const {
+    data: user,
+    error,
+    isLoading,
+    isIdle,
+    isError,
+    run,
+    setData: setUser,
+  } = useAsync<User | null>();
   const login = (form: AuthForm) =>
     auth.login(form).then((user) => setUser(user));
   const register = (form: AuthForm) =>
     auth.register(form).then((user) => setUser(user));
   const logout = () => auth.logout().then(() => setUser(null));
   useEffect(() => {
-    bootstrapUser().then(setUser);
+    run(bootstrapUser());
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  if (isIdle || isLoading) {
+    return <FullPageLoading />;
+  }
+  if (isError) {
+    return <FullPageErrorFallBack error={error} />;
+  }
   return (
     <AuthContext.Provider
       children={children}
